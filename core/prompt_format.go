@@ -3,6 +3,7 @@ package core
 import (
 	"math"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/orochaa/go-clack/core/utils"
 	"github.com/orochaa/go-clack/third_party/picocolors"
@@ -10,34 +11,30 @@ import (
 
 // TrackKeyValue updates the string value and cursor position based on key presses.
 func (p *Prompt[TValue]) TrackKeyValue(key *Key, value string, cursorIndex int) (newValue string, newCursorIndex int) {
+	runes := []rune(value)
+	cursorIndex = min(max(cursorIndex, 0), len(runes))
+
 	switch key.Name {
 	case BackspaceKey:
-		if cursorIndex == 0 || len(value) == 0 {
+		if cursorIndex == 0 {
 			return value, cursorIndex
 		}
-
-		cursorIndex--
-		if cursorIndex == len(value)-1 {
-			return value[0:cursorIndex], cursorIndex
-		}
-
-		return value[0:cursorIndex] + value[cursorIndex+1:], cursorIndex
+		return string(runes[:cursorIndex-1]) + string(runes[cursorIndex:]), cursorIndex - 1
 	case HomeKey:
 		return value, 0
 	case EndKey:
-		return value, len(value)
+		return value, len(runes)
 	case LeftKey:
 		return value, max(cursorIndex-1, 0)
 	case RightKey:
-		return value, min(cursorIndex+1, len(value))
+		return value, min(cursorIndex+1, len(runes))
 	case SpaceKey:
-		return value[0:cursorIndex] + " " + value[cursorIndex:], cursorIndex + 1
+		return string(runes[:cursorIndex]) + " " + string(runes[cursorIndex:]), cursorIndex + 1
 	}
 
-	if len(key.Char) == 1 {
-		return value[0:cursorIndex] + key.Char + value[cursorIndex:], cursorIndex + 1
+	if utf8.RuneCountInString(key.Char) == 1 {
+		return string(runes[:cursorIndex]) + key.Char + string(runes[cursorIndex:]), cursorIndex + 1
 	}
-
 	return value, cursorIndex
 }
 

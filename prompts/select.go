@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"unicode/utf8"
 
 	"github.com/orochaa/go-clack/core"
 	"github.com/orochaa/go-clack/core/validator"
@@ -91,16 +92,15 @@ func Select[TValue comparable](params SelectParams[TValue]) (TValue, error) {
 
 						if i == p.CursorIndex && option.Hint != "" {
 							radio := picocolors.Green(symbols.RADIO_ACTIVE)
-							label := option.Label
-							hint := picocolors.Dim("(" + option.Hint + ")")
+							label := core.Visual(option.Label)
+							hint := picocolors.Dim(core.Visual("(" + option.Hint + ")"))
 							radioOptions[i] = fmt.Sprintf("%s %s %s", radio, label, hint)
 						} else if i == p.CursorIndex {
 							radio := picocolors.Green(symbols.RADIO_ACTIVE)
-							label := option.Label
-							radioOptions[i] = fmt.Sprintf("%s %s", radio, label)
+							radioOptions[i] = fmt.Sprintf("%s %s", radio, core.Visual(option.Label))
 						} else {
 							radio := picocolors.Dim(symbols.RADIO_INACTIVE)
-							label := picocolors.Dim(option.Label)
+							label := picocolors.Dim(core.Visual(option.Label))
 							radioOptions[i] = fmt.Sprintf("%s %s", radio, label)
 						}
 
@@ -112,7 +112,7 @@ func Select[TValue comparable](params SelectParams[TValue]) (TValue, error) {
 					if p.Search == "" {
 						message = fmt.Sprintf("%s\n> %s", message, picocolors.Inverse("T")+picocolors.Dim("ype to filter..."))
 					} else {
-						message = fmt.Sprintf("%s\n> %s", message, p.Search+"█")
+						message = fmt.Sprintf("%s\n> %s", message, core.VisualWithCursor(p.Search, utf8.RuneCountInString(p.Search))+"█")
 					}
 
 					value = p.LimitLines(radioOptions, 4)

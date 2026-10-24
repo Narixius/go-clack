@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"unicode/utf8"
 
 	"github.com/orochaa/go-clack/core"
 	"github.com/orochaa/go-clack/core/validator"
@@ -120,14 +121,14 @@ func MultiSelect[TValue comparable](params MultiSelectParams[TValue]) ([]TValue,
 						radio = picocolors.Dim(symbols.CHECKBOX_INACTIVE)
 						label = picocolors.Dim(option.Label)
 					}
-					radioOptions[i] = radio + " " + label + " " + hint
+					radioOptions[i] = radio + " " + core.Visual(label) + " " + core.Visual(hint)
 				}
 
 				if p.Filter {
 					if p.Search == "" {
 						message = fmt.Sprintf("%s\n> %s", message, picocolors.Inverse("T")+picocolors.Dim("ype to filter..."))
 					} else {
-						message = fmt.Sprintf("%s\n> %s", message, p.Search+"█")
+						message = fmt.Sprintf("%s\n> %s", message, core.VisualWithCursor(p.Search, utf8.RuneCountInString(p.Search))+"█")
 					}
 
 					value = p.LimitLines(radioOptions, 4)

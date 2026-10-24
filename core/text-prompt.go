@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"os"
+	"unicode/utf8"
 
 	"github.com/orochaa/go-clack/core/validator"
 	"github.com/orochaa/go-clack/third_party/picocolors"
@@ -55,7 +56,7 @@ func NewTextPrompt(params TextPromptParams) *TextPrompt {
 			Input:        params.Input,
 			Output:       params.Output,
 			InitialValue: params.InitialValue,
-			CursorIndex:  len(params.InitialValue),
+			CursorIndex:  utf8.RuneCountInString(params.InitialValue),
 			Validate:     WrapValidate(params.Validate, &p.Required, "Value is required! Please enter a value."),
 			Render:       WrapRender[string](&p, params.Render),
 		}),
@@ -86,7 +87,7 @@ func NewTextPrompt(params TextPromptParams) *TextPrompt {
 func (p *TextPrompt) handleKeyPress(key *Key) {
 	if key.Name == TabKey && p.Value == "" && p.Placeholder != "" {
 		p.Value = p.Placeholder
-		p.CursorIndex = len(p.Placeholder)
+		p.CursorIndex = utf8.RuneCountInString(p.Placeholder)
 		return
 	}
 
@@ -100,8 +101,15 @@ func (p *TextPrompt) handleKeyPress(key *Key) {
 // Returns:
 //   - string: The input value with the cursor indicator.
 func (p *TextPrompt) ValueWithCursor() string {
-	if p.CursorIndex == len(p.Value) {
+	if rtlEnabled() {
+		return VisualWithCursor(p.Value, p.CursorIndex)
+	}
+
+	runes := []rune(p.Value)
+	if p.CursorIndex >= len(runes) {
 		return p.Value + "█"
 	}
-	return p.Value[0:p.CursorIndex] + picocolors.Inverse(string(p.Value[p.CursorIndex])) + p.Value[p.CursorIndex+1:]
+	return string(runes[:p.CursorIndex]) +
+		picocolors.Inverse(string(runes[p.CursorIndex])) +
+		string(runes[p.CursorIndex+1:])
 }
